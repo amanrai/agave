@@ -26,6 +26,7 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
                 raw_output TEXT NOT NULL,
                 reasoning TEXT NOT NULL,
                 tool_call TEXT NOT NULL,
+                tool_result TEXT NOT NULL DEFAULT '',
                 prefill_tokens INTEGER NOT NULL,
                 prefill_ms REAL NOT NULL,
                 prefill_tps REAL NOT NULL,
@@ -41,7 +42,11 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE interactions ADD COLUMN tool_result TEXT NOT NULL DEFAULT ''")
+        }
+    }
 
     @Synchronized
     fun insert(interaction: LiveInteraction): StoredInteraction {
@@ -51,6 +56,7 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
             put("raw_output", interaction.rawOutput)
             put("reasoning", interaction.reasoning)
             put("tool_call", interaction.toolCall)
+            put("tool_result", interaction.toolResult)
             put("prefill_tokens", interaction.metrics.prefillTokens)
             put("prefill_ms", interaction.metrics.prefillMs)
             put("prefill_tps", interaction.metrics.prefillTps)
@@ -97,6 +103,7 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
                             rawOutput = cursor.getString(cursor.getColumnIndexOrThrow("raw_output")),
                             reasoning = cursor.getString(cursor.getColumnIndexOrThrow("reasoning")),
                             toolCall = cursor.getString(cursor.getColumnIndexOrThrow("tool_call")),
+                            toolResult = cursor.getString(cursor.getColumnIndexOrThrow("tool_result")),
                             metrics = metrics,
                             tokenTimings = tokenTimingsFromJson(
                                 cursor.getString(cursor.getColumnIndexOrThrow("token_timings")),
@@ -116,6 +123,7 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
         rawOutput = rawOutput,
         reasoning = reasoning,
         toolCall = toolCall,
+        toolResult = toolResult,
         metrics = metrics,
         tokenTimings = tokenTimings,
         error = error,
@@ -123,6 +131,6 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
 
     private companion object {
         const val DATABASE_NAME = "agave.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 2
     }
 }

@@ -1,6 +1,6 @@
 # Agave
 
-Agave is an ARM64 Android demonstration of Needle 2 running fully on-device. It recreates the terminal UI from `needle-2-esp32` as a native Jetpack Compose app while using that repository's independent C99 inference engine through JNI.
+Agave is an ARM64 Android demonstration of Needle 2 running fully on-device. It presents a native Material 3 Jetpack Compose interface while using the independent C99 inference engine from `needle-2-esp32` through JNI.
 
 ## C99 engine source and attribution
 
@@ -14,12 +14,13 @@ Agave adds the Android NDK build, JNI bridge, native row worker pool, Compose in
 - Reads the complete model asset into native RAM during startup and retains it for the process lifetime.
 - Primes and snapshots the fixed tool-schema prefix once at startup.
 - Streams every generated token from native code into Compose.
-- Separately renders `<think>` reasoning and formatted `<tool_call>` JSON.
-- Bundles `set_led`, `get_weather`, and `get_time` schemas; generated calls are displayed but not executed.
+- Separately renders `<think>` reasoning, formatted `<tool_call>` JSON, and execution results side by side.
+- Bundles `set_led`, `get_weather`, `get_time`, `set_brightness`, and `set_volume` schemas.
+- Executes `get_time` locally, applies Agave-window brightness, and controls Android's media-volume stream.
 - Shows an on-screen LED that defaults to off, renders generated colors, animates `flash` calls, and turns off when `duration_seconds` expires.
 - Records TTFT, prefill/decode throughput, confidence, and every token's elapsed/inter-token timing.
-- Persists completed interactions and metrics in an on-device SQLite database.
-- Runs offline and requests no Android permissions.
+- Persists completed interactions, tool results, and metrics in an on-device SQLite database.
+- Runs offline. Media-volume control uses Android's normal `MODIFY_AUDIO_SETTINGS` permission and requires no runtime prompt.
 
 ## Model
 

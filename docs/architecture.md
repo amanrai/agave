@@ -4,7 +4,9 @@
 
 Agave is a single-activity Kotlin application using Jetpack Compose. `AgaveViewModel` owns startup and inference state and runs all native work off the main thread. Compose observes immutable `StateFlow` snapshots.
 
-Completed interactions are stored with `SQLiteOpenHelper`. Each record includes the prompt, raw output, extracted reasoning, formatted call, aggregate inference metrics, and a JSON token timeline.
+Completed interactions are stored with `SQLiteOpenHelper`. Each record includes the prompt, raw output, extracted reasoning, formatted call, execution result, aggregate inference metrics, and a JSON token timeline.
+
+After native generation completes, an allowlisted Kotlin `ToolExecutor` validates and dispatches the complete call array. `get_time` uses `java.time`, `set_volume` uses Android's media `AudioManager`, and `set_brightness` emits a window-scoped value that Compose applies to the active `Activity`. Tool execution never occurs against partial streaming JSON.
 
 ## Native layer
 
@@ -20,24 +22,15 @@ The C99 engine is used instead of Cactus's prebuilt Needle Android library becau
 
 ## UI state
 
-The console follows the source TUI's hierarchy:
-
-- model/status header
-- request panel
-- streamed reasoning panel
-- formatted tool-call panel
-- LED preview
-- live performance panel
-- request composer
-
-History is a persistent peer view. Selecting a record opens its output, aggregate metrics, and complete per-token timing timeline.
+The console uses a Material 3 layout with a black canvas, request and reasoning cards, side-by-side tool-call/result cards, a floating LED and performance overlay, and a persistent request composer. History is a peer tab; selecting a record opens its generated output, tool result, aggregate metrics, and complete per-token timing timeline.
 
 ## Threading
 
 - Model asset I/O: `Dispatchers.IO`
 - Native initialization and inference: `Dispatchers.Default`
 - Quantized matrix rows: native persistent worker pool
-- UI: Compose main thread through `StateFlow`
+- Tool execution: inference callback thread after complete JSON is available
+- UI and window brightness application: Compose main thread through `StateFlow`
 - SQLite reads/writes: `Dispatchers.IO`
 
 Only one inference call can run at a time. Native model access is protected by one process-wide mutex.

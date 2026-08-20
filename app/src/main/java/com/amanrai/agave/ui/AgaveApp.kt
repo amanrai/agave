@@ -1,5 +1,8 @@
 package com.amanrai.agave.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.SystemClock
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -9,11 +12,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,25 +26,42 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,6 +72,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -71,13 +97,11 @@ import com.amanrai.agave.model.StoredInteraction
 import com.amanrai.agave.model.TokenTiming
 import com.amanrai.agave.ui.theme.AgaveAccent
 import com.amanrai.agave.ui.theme.AgaveBackground
-import com.amanrai.agave.ui.theme.AgaveBlue
 import com.amanrai.agave.ui.theme.AgaveBorder
 import com.amanrai.agave.ui.theme.AgaveButtonBlue
 import com.amanrai.agave.ui.theme.AgaveButtonText
 import com.amanrai.agave.ui.theme.AgaveCyan
 import com.amanrai.agave.ui.theme.AgaveFaint
-import com.amanrai.agave.ui.theme.AgaveGreen
 import com.amanrai.agave.ui.theme.AgaveMuted
 import com.amanrai.agave.ui.theme.AgaveRed
 import com.amanrai.agave.ui.theme.AgaveSunken
@@ -93,121 +117,111 @@ import java.util.Locale
 @Composable
 fun AgaveApp(viewModel: AgaveViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val activity = LocalContext.current.findActivity()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AgaveBackground)
-            .windowInsetsPadding(WindowInsets.safeDrawing),
-    ) {
-        Header(
-            state = state,
-            onConsole = viewModel::showConsole,
-            onHistory = viewModel::showHistory,
-        )
-        when (state.screen) {
-            AgaveScreen.Console -> ConsoleScreen(state, viewModel::submit)
-            AgaveScreen.History -> HistoryScreen(state, viewModel::openHistoryItem)
-            AgaveScreen.HistoryDetail -> HistoryDetailScreen(
-                item = state.selectedInteraction,
-                onBack = viewModel::showHistory,
+    LaunchedEffect(state.windowBrightness) {
+        state.windowBrightness?.let { brightness ->
+            activity?.window?.attributes = activity?.window?.attributes?.apply {
+                screenBrightness = brightness.coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = AgaveBackground,
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            Header(
+                state = state,
+                onConsole = viewModel::showConsole,
+                onHistory = viewModel::showHistory,
             )
+        },
+    ) { contentPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        ) {
+            when (state.screen) {
+                AgaveScreen.Console -> ConsoleScreen(state, viewModel::submit)
+                AgaveScreen.History -> HistoryScreen(state, viewModel::openHistoryItem)
+                AgaveScreen.HistoryDetail -> HistoryDetailScreen(
+                    item = state.selectedInteraction,
+                    onBack = viewModel::showHistory,
+                )
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Header(
     state: AgaveUiState,
     onConsole: () -> Unit,
     onHistory: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AgaveSurface)
-            .border(1.dp, AgaveBorder)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Agave",
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                text = "  ·  Needle 2  ·  45M  ·  CQ2  ·  on-device",
-                color = AgaveMuted,
-                fontSize = 11.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            StatusLabel(state.engine)
-        }
+    val selectedTab = if (state.screen == AgaveScreen.Console) 0 else 1
 
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            HeaderTab(
-                label = "Console",
-                selected = state.screen == AgaveScreen.Console,
-                onClick = onConsole,
+    Surface(color = AgaveSurface, tonalElevation = 4.dp) {
+        Column {
+            TopAppBar(
+                title = {
+                    Text("Agave", style = MaterialTheme.typography.titleLarge)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = AgaveSurface,
+                    titleContentColor = AgaveTextHigh,
+                ),
             )
-            Spacer(Modifier.width(18.dp))
-            HeaderTab(
-                label = "History (${state.history.size})",
-                selected = state.screen != AgaveScreen.Console,
-                onClick = onHistory,
-            )
-            Spacer(Modifier.weight(1f))
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = AgaveSurface,
+                contentColor = AgaveAccent,
+                divider = { HorizontalDivider(color = AgaveBorder) },
+            ) {
+                AppTab(
+                    label = "Console",
+                    icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                    selected = selectedTab == 0,
+                    onClick = onConsole,
+                )
+                AppTab(
+                    label = "History (${state.history.size})",
+                    icon = { Icon(Icons.Default.History, contentDescription = null) },
+                    selected = selectedTab == 1,
+                    onClick = onHistory,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StatusLabel(engine: EngineUiState) {
-    val color = when (engine.phase) {
-        "ready" -> AgaveGreen
-        "error" -> AgaveRed
-        "priming", "loading" -> AgaveAccent
-        else -> AgaveBlue
-    }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(7.dp)
-                .background(color, RoundedCornerShape(2.dp)),
-        )
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text = engine.phase.ifBlank { "starting" },
-            color = color,
-            fontSize = 11.sp,
-        )
-    }
-}
-
-@Composable
-private fun HeaderTab(label: String, selected: Boolean, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .width(IntrinsicSize.Min)
-            .clickable(onClick = onClick)
-            .padding(vertical = 3.dp),
-    ) {
-        Text(
-            text = label,
-            color = if (selected) AgaveTextHigh else AgaveMuted,
-            fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-        )
-        Spacer(Modifier.height(4.dp))
-        Box(
-            Modifier
-                .height(2.dp)
-                .fillMaxWidth()
-                .background(if (selected) AgaveAccent else Color.Transparent),
-        )
-    }
+private fun AppTab(
+    label: String,
+    icon: @Composable () -> Unit,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Tab(
+        selected = selected,
+        onClick = onClick,
+        modifier = Modifier.height(50.dp),
+        selectedContentColor = AgaveTextHigh,
+        unselectedContentColor = AgaveMuted,
+        text = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) { icon() }
+                Text(label, style = MaterialTheme.typography.labelMedium)
+            }
+        },
+    )
 }
 
 @Composable
@@ -230,23 +244,21 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (current == null) {
-                item { EmptyConsole() }
-            } else {
+            if (current != null) {
                 item { PromptLine(current.prompt) }
                 if (current.status == "reading prompt") {
                     item { InlineStatus("Reading your request", AgaveAccent) }
                 }
                 if (current.reasoning.isNotBlank()) {
                     item {
-                        Panel(title = "reasoning") {
+                        Panel(title = "Reasoning") {
                             Text(
                                 text = current.reasoning,
                                 color = AgaveMuted,
@@ -258,11 +270,11 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
                     }
                 }
                 if (current.toolCall.isNotBlank()) {
-                    item { ToolCallPanel(current.toolCall) }
+                    item { ToolExchangePanel(current.toolCall, current.toolResult) }
                 }
                 if (current.error != null) {
                     item {
-                        Panel(title = "error", titleColor = AgaveRed) {
+                        Panel(title = "Error", titleColor = AgaveRed) {
                             Text(current.error, color = AgaveRed, fontSize = 13.sp)
                         }
                     }
@@ -273,9 +285,9 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         LiveFooter(current)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         Composer(
             value = prompt,
             onValueChange = { prompt = it },
@@ -338,37 +350,35 @@ private fun formatProgress(engine: EngineUiState): String {
 }
 
 @Composable
-private fun EmptyConsole() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(0.8f),
-        contentAlignment = Alignment.Center,
+private fun PromptLine(prompt: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        border = BorderStroke(1.dp, AgaveButtonBlue.copy(alpha = 0.18f)),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Needle 2 is ready", color = AgaveTextHigh, fontSize = 16.sp)
-            Spacer(Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = AgaveButtonBlue,
+                contentColor = AgaveButtonText,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("You", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
             Text(
-                "Try “flash the red light for two seconds”",
-                color = AgaveFaint,
-                fontSize = 13.sp,
+                prompt,
+                color = AgaveTextHigh,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
             )
         }
-    }
-}
-
-@Composable
-private fun PromptLine(prompt: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AgaveSunken, RoundedCornerShape(2.dp))
-            .border(1.dp, AgaveBorder, RoundedCornerShape(2.dp))
-            .padding(12.dp),
-    ) {
-        Text("›", color = AgaveGreen, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.width(8.dp))
-        Text(prompt, color = AgaveTextHigh, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -386,41 +396,131 @@ private fun InlineStatus(label: String, color: Color) {
 }
 
 @Composable
-private fun ToolCallPanel(toolCall: String) {
-    Panel(title = "tool call", titleColor = AgaveCyan) {
-        Text(
-            text = toolCall,
-            color = AgaveCyan,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
+private fun ToolExchangePanel(toolCall: String, toolResult: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ToolPayloadCard(
+            title = "Tool call",
+            payload = toolCall,
+            accent = AgaveCyan,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        )
+        ToolPayloadCard(
+            title = "Result",
+            payload = toolResult,
+            accent = AgaveAccent,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            emptyLabel = "Waiting for the tool…",
         )
     }
 }
 
 @Composable
+private fun ToolPayloadCard(
+    title: String,
+    payload: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    emptyLabel: String = "",
+) {
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = AgaveSurface),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.2f)),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(7.dp).background(accent, CircleShape))
+                Spacer(Modifier.width(7.dp))
+                Text(
+                    title,
+                    color = accent,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Surface(
+                color = AgaveSunken,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = payload.ifBlank { emptyLabel },
+                    color = if (payload.isBlank()) AgaveMuted else accent,
+                    fontFamily = if (payload.isBlank()) FontFamily.Default else FontFamily.Monospace,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun LiveFooter(interaction: LiveInteraction?) {
-    Row(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(205.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .height(210.dp),
+        color = AgaveSurface.copy(alpha = 0.94f),
+        shape = MaterialTheme.shapes.extraLarge,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        tonalElevation = 6.dp,
+        shadowElevation = 10.dp,
     ) {
-        Panel(
-            title = "LED",
-            modifier = Modifier
-                .weight(0.8f)
-                .fillMaxHeight(),
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            LedPreview(interaction?.toolCall.orEmpty())
-        }
-        Panel(
-            title = "live metrics",
-            modifier = Modifier
-                .weight(1.4f)
-                .fillMaxHeight(),
-        ) {
-            LiveMetrics(interaction)
+            Column(
+                modifier = Modifier
+                    .weight(0.72f)
+                    .fillMaxHeight(),
+            ) {
+                Text(
+                    "LED",
+                    color = AgaveMuted,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(8.dp))
+                LedPreview(interaction?.toolCall.orEmpty())
+            }
+            Box(
+                Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(AgaveBorder),
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1.4f)
+                    .fillMaxHeight(),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(7.dp).background(AgaveCyan, CircleShape))
+                    Spacer(Modifier.width(7.dp))
+                    Text(
+                        "Live metrics",
+                        color = AgaveTextHigh,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                LiveMetrics(interaction)
+            }
         }
     }
 }
@@ -482,19 +582,38 @@ private fun LedPreview(toolCall: String, honorDuration: Boolean = true) {
         else -> "$colorName · solid · $secondsLabel"
     }
 
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Box(
-            Modifier
-                .fillMaxWidth()
-                .height(34.dp)
-                .background(displayColor, RoundedCornerShape(2.dp))
-                .border(1.dp, if (mode == "off") AgaveBorder else color.copy(alpha = 0.5f), RoundedCornerShape(2.dp)),
-        )
-        Spacer(Modifier.height(7.dp))
+            modifier = Modifier
+                .size(76.dp)
+                .background(AgaveSunken, CircleShape)
+                .padding(7.dp)
+                .background(displayColor, CircleShape)
+                .border(
+                    1.dp,
+                    if (mode == "off") AgaveBorder else color.copy(alpha = 0.55f),
+                    CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (mode == "off") {
+                Icon(
+                    Icons.Default.Bolt,
+                    contentDescription = null,
+                    tint = AgaveFaint,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(12.dp))
         Text(
             label,
             color = if (mode == "off") AgaveMuted else color,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
         )
@@ -511,22 +630,60 @@ private fun LiveMetrics(interaction: LiveInteraction?) {
     }
     val metrics = interaction.metrics
     val liveTps = liveDecodeTps(interaction.tokenTimings)
-    MetricRow("TTFT", metricMs(metrics.ttftMs))
-    MetricRow(
-        "prefill",
-        if (metrics.prefillTokens > 0) {
-            "${formatRate(metrics.prefillTps)} · ${metrics.prefillTokens} tok"
-        } else "—",
-    )
-    MetricRow(
-        "decode",
-        when {
-            metrics.decodeTps > 0.0 -> formatRate(metrics.decodeTps)
-            liveTps > 0.0 -> "${formatRate(liveTps)} live"
-            else -> "—"
-        },
-    )
-    MetricRow("tokens", interaction.tokenTimings.size.toString())
+    val prefill = if (metrics.prefillTokens > 0) {
+        "${formatRate(metrics.prefillTps)} · ${metrics.prefillTokens} tok"
+    } else {
+        "—"
+    }
+    val decode = when {
+        metrics.decodeTps > 0.0 -> formatRate(metrics.decodeTps)
+        liveTps > 0.0 -> "${formatRate(liveTps)} live"
+        else -> "—"
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MetricTile("TTFT", metricMs(metrics.ttftMs), Modifier.weight(1f))
+            MetricTile("Tokens", interaction.tokenTimings.size.toString(), Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MetricTile("Prefill", prefill, Modifier.weight(1f))
+            MetricTile("Decode", decode, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun MetricTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxHeight(),
+        color = AgaveSunken,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(label, color = AgaveMuted, style = MaterialTheme.typography.labelSmall)
+            Text(
+                value,
+                color = AgaveTextHigh,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 @Composable
@@ -541,46 +698,64 @@ private fun Composer(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            label = { Text("Request") },
-            placeholder = { Text("flash the red light for two seconds") },
-            minLines = 1,
-            maxLines = 3,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions(onSend = { onSubmit() }),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = AgaveSunken,
-                unfocusedContainerColor = AgaveSunken,
-                disabledContainerColor = AgaveSunken,
-                focusedBorderColor = AgaveAccent,
-                unfocusedBorderColor = AgaveBorder,
-                focusedTextColor = AgaveTextHigh,
-                unfocusedTextColor = AgaveText,
-                focusedLabelColor = AgaveAccent,
-                unfocusedLabelColor = AgaveMuted,
-                cursorColor = AgaveAccent,
-            ),
-            shape = RoundedCornerShape(2.dp),
-            modifier = Modifier.weight(1f),
-        )
-        Button(
-            onClick = onSubmit,
-            enabled = enabled && value.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AgaveButtonBlue,
-                contentColor = AgaveButtonText,
-                disabledContainerColor = AgaveFaint,
-                disabledContentColor = AgaveSunken,
-            ),
-            shape = RoundedCornerShape(2.dp),
-            modifier = Modifier.height(56.dp),
-        ) {
-            Text("Run", fontWeight = FontWeight.Medium)
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                enabled = enabled,
+                label = { Text("Ask Agave") },
+                minLines = 1,
+                maxLines = 3,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { onSubmit() }),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = AgaveSunken,
+                    unfocusedContainerColor = AgaveSunken,
+                    disabledContainerColor = AgaveSunken,
+                    focusedBorderColor = AgaveAccent,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedTextColor = AgaveTextHigh,
+                    unfocusedTextColor = AgaveText,
+                    focusedLabelColor = AgaveAccent,
+                    unfocusedLabelColor = AgaveMuted,
+                    cursorColor = AgaveAccent,
+                ),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .weight(1f)
+                    .onPreviewKeyEvent { event ->
+                        if (
+                            event.type == KeyEventType.KeyDown &&
+                            event.key == Key.Enter &&
+                            !event.isShiftPressed &&
+                            enabled &&
+                            value.isNotBlank()
+                        ) {
+                            onSubmit()
+                            true
+                        } else {
+                            false
+                        }
+                    },
+            )
+            Button(
+                onClick = onSubmit,
+                enabled = enabled && value.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AgaveButtonBlue,
+                    contentColor = AgaveButtonText,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = AgaveFaint,
+                ),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.size(56.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Send request",
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
-    }
 }
 
 @Composable
@@ -596,10 +771,9 @@ private fun HistoryScreen(
     }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(state.history, key = { it.id }) { item ->
             HistoryRow(item = item, onClick = { onOpen(item) })
@@ -609,35 +783,48 @@ private fun HistoryScreen(
 
 @Composable
 private fun HistoryRow(item: StoredInteraction, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AgaveSurface, RoundedCornerShape(2.dp))
-            .border(1.dp, AgaveBorder, RoundedCornerShape(2.dp))
-            .clickable(onClick = onClick)
-            .padding(11.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = AgaveSurface),
+        border = BorderStroke(1.dp, AgaveBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                item.prompt,
-                color = AgaveTextHigh,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                formatDate(item.createdAt),
-                color = AgaveFaint,
-                fontSize = 10.sp,
-            )
-        }
-        Spacer(Modifier.width(10.dp))
-        Column(horizontalAlignment = Alignment.End) {
-            Text(metricMs(item.metrics.ttftMs), color = AgaveAccent, fontSize = 11.sp)
-            Text(formatRate(item.metrics.decodeTps), color = AgaveMuted, fontSize = 10.sp)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = AgaveAccent,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    item.prompt,
+                    color = AgaveTextHigh,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(formatDate(item.createdAt), color = AgaveFaint, style = MaterialTheme.typography.labelSmall)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(metricMs(item.metrics.ttftMs), color = AgaveAccent, fontSize = 11.sp)
+                Text(formatRate(item.metrics.decodeTps), color = AgaveMuted, fontSize = 10.sp)
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = AgaveMuted)
         }
     }
 }
@@ -652,25 +839,21 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
     }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text(
-                "‹ Back to history",
-                color = AgaveAccent,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .clickable(onClick = onBack)
-                    .padding(vertical = 6.dp),
-            )
+            TextButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                Spacer(Modifier.width(7.dp))
+                Text("Back to history")
+            }
         }
         item { PromptLine(item.prompt) }
         if (item.reasoning.isNotBlank()) {
             item {
-                Panel("reasoning") {
+                Panel("Reasoning") {
                     Text(
                         item.reasoning,
                         color = AgaveMuted,
@@ -680,10 +863,12 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
                 }
             }
         }
-        if (item.toolCall.isNotBlank()) item { ToolCallPanel(item.toolCall) }
+        if (item.toolCall.isNotBlank()) {
+            item { ToolExchangePanel(item.toolCall, item.toolResult) }
+        }
         if (item.error != null) {
             item {
-                Panel("error", titleColor = AgaveRed) {
+                Panel("Error", titleColor = AgaveRed) {
                     Text(item.error, color = AgaveRed)
                 }
             }
@@ -698,13 +883,13 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
                 Panel("LED", Modifier.weight(0.8f).fillMaxHeight()) {
                     LedPreview(item.toolCall, honorDuration = false)
                 }
-                Panel("metrics", Modifier.weight(1.4f).fillMaxHeight()) {
+                Panel("Metrics", Modifier.weight(1.4f).fillMaxHeight()) {
                     MetricsSummary(item.metrics, item.tokenTimings)
                 }
             }
         }
         item {
-            Panel("token timeline") {
+            Panel("Token timeline") {
                 TokenTimelineHeader()
                 HorizontalDivider(color = AgaveBorder)
                 if (item.tokenTimings.isEmpty()) {
@@ -742,25 +927,28 @@ private fun TokenTimelineHeader() {
 
 @Composable
 private fun TokenTimelineRow(timing: TokenTiming) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AgaveSunken, RoundedCornerShape(2.dp))
-            .border(1.dp, AgaveBorder, RoundedCornerShape(2.dp))
-            .padding(horizontal = 9.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = AgaveSunken,
+        shape = MaterialTheme.shapes.small,
+        border = BorderStroke(1.dp, AgaveBorder),
     ) {
-        Text(
-            "${timing.index + 1} · ${timing.tokenId}  ${visibleToken(timing.text)}",
-            color = AgaveText,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 10.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(metricMs(timing.elapsedMs), color = AgaveMuted, fontSize = 10.sp, modifier = Modifier.width(72.dp))
-        Text(metricMs(timing.deltaMs), color = AgaveAccent, fontSize = 10.sp, modifier = Modifier.width(62.dp))
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "${timing.index + 1} · ${timing.tokenId}  ${visibleToken(timing.text)}",
+                color = AgaveText,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Text(metricMs(timing.elapsedMs), color = AgaveMuted, fontSize = 10.sp, modifier = Modifier.width(72.dp))
+            Text(metricMs(timing.deltaMs), color = AgaveAccent, fontSize = 10.sp, modifier = Modifier.width(62.dp))
+        }
     }
 }
 
@@ -785,16 +973,27 @@ private fun Panel(
     titleColor: Color = AgaveMuted,
     content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(AgaveSurface, RoundedCornerShape(2.dp))
-            .border(BorderStroke(1.dp, AgaveBorder), RoundedCornerShape(2.dp))
-            .padding(10.dp),
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = AgaveSurface),
+        border = BorderStroke(1.dp, AgaveBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Text(title, color = titleColor, fontSize = 10.sp, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.height(7.dp))
-        content()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+        ) {
+            Text(
+                title,
+                color = titleColor,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(10.dp))
+            content()
+        }
     }
 }
 
@@ -852,6 +1051,12 @@ private fun formatBytes(value: Long): String = when {
     value >= 1024 * 1024 -> String.format(Locale.US, "%.1f MB", value / (1024.0 * 1024.0))
     value >= 1024 -> String.format(Locale.US, "%.1f KB", value / 1024.0)
     else -> "$value B"
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 private fun visibleToken(value: String): String {

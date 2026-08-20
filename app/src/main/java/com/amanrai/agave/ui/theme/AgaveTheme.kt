@@ -13,28 +13,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val AgaveBackground = Color(0xFF282C34)
-val AgaveSurface = Color(0xFF2F343D)
-val AgaveSunken = Color(0xFF21252B)
-val AgaveText = Color(0xFFABB2BF)
-val AgaveTextHigh = Color(0xFFC8CDD4)
-val AgaveMuted = Color(0xFF7F8794)
-val AgaveFaint = Color(0xFF5C6370)
-val AgaveAccent = Color(0xFFE5C07B)
-val AgaveAccentDeep = Color(0xFFD19A66)
-val AgaveBlue = Color(0xFF61AFEF)
-val AgaveCyan = Color(0xFF56B6C2)
-val AgaveGreen = Color(0xFF98C379)
-val AgaveRed = Color(0xFFE06C75)
-val AgaveButtonBlue = Color(0xFF9DB8D6)
-val AgaveButtonText = Color(0xFF21252B)
-val AgaveBorder = Color.White.copy(alpha = 0.06f)
+val AgaveBackground = Color.Black
+val AgaveSurface = Color(0xFF15171C)
+val AgaveSunken = Color(0xFF090A0D)
+val AgaveText = Color(0xFFBEC3CD)
+val AgaveTextHigh = Color(0xFFE9ECF1)
+val AgaveMuted = Color(0xFF858B98)
+val AgaveFaint = Color(0xFF535966)
+val AgaveAccent = Color(0xFF76D6B2)
+val AgaveAccentDeep = Color(0xFF4CBF96)
+val AgaveBlue = Color(0xFF80AFFF)
+val AgaveCyan = Color(0xFF67D4E0)
+val AgaveGreen = Color(0xFF76D6B2)
+val AgaveRed = Color(0xFFFF7A90)
+val AgaveButtonBlue = Color(0xFFA8B8FF)
+val AgaveButtonText = Color(0xFF111318)
+val AgaveBorder = Color.White.copy(alpha = 0.08f)
 
 private val Colors = darkColorScheme(
     primary = AgaveAccent,
     onPrimary = AgaveSunken,
-    secondary = AgaveBlue,
-    onSecondary = AgaveSunken,
+    primaryContainer = Color(0xFF17372D),
+    onPrimaryContainer = AgaveTextHigh,
+    secondary = AgaveButtonBlue,
+    onSecondary = AgaveButtonText,
+    secondaryContainer = Color(0xFF252D49),
+    onSecondaryContainer = AgaveTextHigh,
+    tertiary = AgaveCyan,
+    onTertiary = AgaveSunken,
+    tertiaryContainer = Color(0xFF15353A),
+    onTertiaryContainer = AgaveTextHigh,
     background = AgaveBackground,
     onBackground = AgaveText,
     surface = AgaveSurface,
@@ -43,7 +51,10 @@ private val Colors = darkColorScheme(
     onSurfaceVariant = AgaveMuted,
     error = AgaveRed,
     onError = AgaveSunken,
-    outline = AgaveBorder,
+    errorContainer = Color(0xFF431F29),
+    onErrorContainer = Color(0xFFFFBAC6),
+    outline = Color.White.copy(alpha = 0.12f),
+    outlineVariant = AgaveBorder,
 )
 
 private val Type = Typography(
@@ -80,11 +91,11 @@ private val Type = Typography(
 )
 
 private val AgaveShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),
-    small = RoundedCornerShape(2.dp),
-    medium = RoundedCornerShape(2.dp),
-    large = RoundedCornerShape(3.dp),
-    extraLarge = RoundedCornerShape(3.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(18.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
 @Composable

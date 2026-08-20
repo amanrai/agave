@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <condition_variable>
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -342,8 +343,19 @@ Java_com_amanrai_agave_nativebridge_NativeBridge_generate(
     nd_sampler sampler;
     nd_sampler_init(&sampler, &g_model.tok, &g_grammar);
 
+    std::string normalized_query = query;
+    std::transform(normalized_query.begin(), normalized_query.end(), normalized_query.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    const bool needs_location_context =
+        normalized_query.find("time") != std::string::npos ||
+        normalized_query.find("weather") != std::string::npos ||
+        normalized_query.find("temperature") != std::string::npos ||
+        normalized_query.find("forecast") != std::string::npos;
+    const std::string location_context = needs_location_context
+        ? "\ndefault location: here"
+        : "";
     const std::string suffix =
-        "\n" + query + "<|im_end|>\n<|im_start|>assistant\n";
+        "\n" + query + location_context + "<|im_end|>\n<|im_start|>assistant\n";
     std::vector<uint32_t> ids(1024);
     const int prompt_tokens = nd_tok_encode_ex(
         &g_model.tok, suffix.data(), suffix.size(), ids.data(),

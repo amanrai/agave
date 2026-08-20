@@ -13,6 +13,7 @@ import com.amanrai.agave.model.decodeToken
 import com.amanrai.agave.model.parseStream
 import com.amanrai.agave.nativebridge.NativeBridge
 import com.amanrai.agave.nativebridge.NativeCallbacks
+import com.amanrai.agave.tools.ToolExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.withContext
 
 class AgaveViewModel(application: Application) : AndroidViewModel(application) {
     private val store = InteractionStore(application)
+    private val toolExecutor = ToolExecutor(application)
     private val _state = MutableStateFlow(AgaveUiState())
     val state: StateFlow<AgaveUiState> = _state.asStateFlow()
 
@@ -132,11 +134,13 @@ class AgaveViewModel(application: Application) : AndroidViewModel(application) {
                                 _state.update { ui ->
                                     val current = ui.current ?: return@update ui
                                     val (reasoning, call) = parseStream(rawOutput)
+                                    val execution = toolExecutor.execute(call)
                                     val final = current.copy(
                                         status = if (current.error == null) "done" else "error",
                                         rawOutput = rawOutput,
                                         reasoning = reasoning,
                                         toolCall = call,
+                                        toolResult = execution.resultJson,
                                         metrics = current.metrics.copy(
                                             decodeTokens = tokens,
                                             decodeMs = decodeMs,
@@ -146,7 +150,10 @@ class AgaveViewModel(application: Application) : AndroidViewModel(application) {
                                         ),
                                     )
                                     completed = final
-                                    ui.copy(current = final)
+                                    ui.copy(
+                                        current = final,
+                                        windowBrightness = execution.windowBrightness ?: ui.windowBrightness,
+                                    )
                                 }
                             },
                             errorHandler = { message ->
@@ -332,4 +339,5 @@ data class AgaveUiState(
     val screen: AgaveScreen = AgaveScreen.Console,
     val isGenerating: Boolean = false,
     val transientError: String? = null,
+    val windowBrightness: Float? = null,
 )
