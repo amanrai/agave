@@ -31,19 +31,23 @@ Agave adds the Android NDK build, JNI bridge, native row worker pool, Compose in
 
 The model and original engine are Apache-2.0 licensed. See `LICENSE`.
 
-## Build
-
-Requirements:
-
-- JDK 17+
-- Android SDK 35
-- Android NDK `28.2.13676358`
-- CMake 3.22.1
-- An ARM64 Android device running Android 10 / API 29 or newer
+The checked-in model can be verified or restored directly from its public source with:
 
 ```bash
+./scripts/download-model.sh
+```
+
+The script verifies the expected SHA-256 digest before installing the asset.
+
+## Build
+
+Requirements include JDK 17, Android SDK 35, Android NDK `28.2.13676358`, CMake 3.22.1, and an ARM64 device running API 29 or newer. See the complete [build and model-download notes](docs/build.md).
+
+```bash
+git clone https://github.com/amanrai/agave.git
 cd agave
-./gradlew assembleDebug
+./scripts/download-model.sh
+./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -72,5 +76,6 @@ These are app-observed steady-clock measurements around the C engine; they are n
 
 ## Documents
 
+- [`docs/build.md`](docs/build.md)
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/known-limitations.md`](docs/known-limitations.md)
