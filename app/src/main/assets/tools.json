@@ -1,0 +1,52 @@
+[
+  {
+    "name": "set_led",
+    "description": "Light the onboard RGB LED",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "description": "color for solid or flash; omit for off",
+          "enum": ["red", "green", "blue", "yellow", "purple", "white"]
+        },
+        "mode": {
+          "type": "string",
+          "description": "solid, flash, or off; use off to turn light off",
+          "enum": ["solid", "flash", "off"]
+        },
+        "duration_seconds": {
+          "type": "number",
+          "maximum": 30
+        }
+      },
+      "required": ["mode"]
+    }
+  },
+  {
+    "name": "get_weather",
+    "description": "Get the current weather",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "city or place when specified"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_time",
+    "description": "Get the current local time",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "city or place when specified"
+        }
+      }
+    }
+  }
+]

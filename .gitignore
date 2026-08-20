@@ -1,0 +1,23 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Gradle and Kotlin
+.gradle/
+.kotlin/
+**/build/
+
+# Android NDK / CMake
+**/.cxx/
+.externalNativeBuild/
+
+# Local SDK configuration
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Device captures and local diagnostics
+captures/
+*.hprof
