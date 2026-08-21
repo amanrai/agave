@@ -21,6 +21,52 @@ Agave adds the Android NDK build, JNI bridge, native row worker pool, Compose in
 - Persists completed interactions, tool results, and metrics in an on-device SQLite database.
 - Runs offline. Media-volume control uses Android's normal `MODIFY_AUDIO_SETTINGS` permission and requires no runtime prompt.
 
+## Built skills
+
+`implemented fully` means both model selection and a functional Android/JVM executor are present. `implemented in skill selection only` means the skill participates in BM25 retrieval and grammar-constrained selection, then returns an explicit non-execution result.
+
+| Skill | Capability | Status |
+|---|---|---|
+| `automate_ui` | Perform a described Android interface action | `implemented in skill selection only` |
+| `capture_screen` | Capture the Android screen | `implemented in skill selection only` |
+| `compose_email` | Compose an email draft without sending it | `implemented in skill selection only` |
+| `compose_message` | Compose an SMS message without sending it | `implemented in skill selection only` |
+| `copy_text` | Copy text to the Android clipboard | `implemented in skill selection only` |
+| `create_calendar_event` | Create an event in the Android calendar | `implemented in skill selection only` |
+| `dial_number` | Open a phone number in the dialer without calling | `implemented in skill selection only` |
+| `draw_overlay` | Show text over other Android apps | `implemented in skill selection only` |
+| `find_tool` | Retrieve candidate skills for a user command | `router` |
+| `get_battery` | Get battery charge and charging state | `implemented in skill selection only` |
+| `get_connectivity` | Get the active Android network connection | `implemented in skill selection only` |
+| `get_contacts` | Search Android contacts | `implemented in skill selection only` |
+| `get_device_info` | Get Android device and screen information | `implemented in skill selection only` |
+| `get_location` | Get the phone's current location | `implemented in skill selection only` |
+| `get_notifications` | Read current Android notifications | `implemented in skill selection only` |
+| `get_step_count` | Get the device step count for a period | `implemented in skill selection only` |
+| `get_time` | Get the current time, date, and timezone | `implemented fully` |
+| `get_weather` | Get weather for a location | `implemented in skill selection only` |
+| `keep_screen_awake` | Keep the Agave screen awake or allow sleep | `implemented in skill selection only` |
+| `lock_device` | Lock the Android device | `implemented in skill selection only` |
+| `open_map` | Open a place or directions in a maps app | `implemented in skill selection only` |
+| `open_settings` | Open an Android Settings panel | `implemented in skill selection only` |
+| `open_url` | Open a web URL in the default browser | `implemented in skill selection only` |
+| `post_notification` | Post an Android notification | `implemented in skill selection only` |
+| `record_audio` | Record audio from the microphone | `implemented in skill selection only` |
+| `scan_nearby_devices` | Scan for nearby Bluetooth devices | `implemented in skill selection only` |
+| `set_alarm` | Create an alarm through the Android clock app | `implemented in skill selection only` |
+| `set_brightness` | Change only the Agave screen brightness | `implemented fully` |
+| `set_do_not_disturb` | Enable or disable Android Do Not Disturb | `implemented in skill selection only` |
+| `set_exact_alarm` | Schedule an exact background alarm | `implemented in skill selection only` |
+| `set_orientation` | Set the Agave screen orientation | `implemented in skill selection only` |
+| `set_timer` | Start a countdown timer | `implemented in skill selection only` |
+| `set_volume` | Change Android media volume | `implemented fully` |
+| `share_text` | Share text through the Android share sheet | `implemented in skill selection only` |
+| `speak_text` | Speak text aloud with Android text-to-speech | `implemented in skill selection only` |
+| `take_photo` | Take a photo with an Android camera | `implemented in skill selection only` |
+| `vibrate` | Vibrate the phone for a duration | `implemented in skill selection only` |
+
+Each manifest lives under [`app/src/main/assets/skills`](app/src/main/assets/skills). See [`docs/skills.md`](docs/skills.md) for the manifest format and routing lifecycle.
+
 ## Model
 
 `app/src/main/assets/needle2.cact` was downloaded from:
