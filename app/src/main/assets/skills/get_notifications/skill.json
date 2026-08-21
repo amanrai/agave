@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "get_notifications",
+  "version": 1,
+  "order": 400,
+  "enabled": true,
+  "tool": {
+    "name": "get_notifications",
+    "description": "Read current Android notifications",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "app_name": {
+          "type": "string",
+          "description": "optional app name filter"
+        }
+      }
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "notifications",
+      "alerts",
+      "messages",
+      "notification listener",
+      "read"
+    ],
+    "examples": [
+      "read my notifications",
+      "show notifications from Messages"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_notifications"
+  }
+}

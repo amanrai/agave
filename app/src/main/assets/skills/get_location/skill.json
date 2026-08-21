@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "get_location",
+  "version": 1,
+  "order": 260,
+  "enabled": true,
+  "tool": {
+    "name": "get_location",
+    "description": "Get the phone current location",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "location",
+      "where",
+      "position",
+      "coordinates",
+      "latitude",
+      "longitude",
+      "gps",
+      "here"
+    ],
+    "examples": [
+      "where am I",
+      "get my current coordinates",
+      "find the phone location"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_location"
+  }
+}

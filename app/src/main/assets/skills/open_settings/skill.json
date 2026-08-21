@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "open_settings",
+  "version": 1,
+  "order": 190,
+  "enabled": true,
+  "tool": {
+    "name": "open_settings",
+    "description": "Open an Android Settings panel",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "panel": {
+          "type": "string",
+          "description": "settings panel to open",
+          "enum": [
+            "wifi",
+            "bluetooth",
+            "display",
+            "location",
+            "notifications",
+            "general"
+          ]
+        }
+      },
+      "required": [
+        "panel"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "settings",
+      "wifi",
+      "bluetooth",
+      "display",
+      "location",
+      "notifications",
+      "preferences"
+    ],
+    "examples": [
+      "open Wi-Fi settings",
+      "show Bluetooth settings",
+      "open Android settings"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "open_settings"
+  }
+}

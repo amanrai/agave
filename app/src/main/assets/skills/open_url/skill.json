@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "open_url",
+  "version": 1,
+  "order": 150,
+  "enabled": true,
+  "tool": {
+    "name": "open_url",
+    "description": "Open a web URL in the default browser",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "web URL to open"
+        }
+      },
+      "required": [
+        "url"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "open",
+      "url",
+      "website",
+      "browser",
+      "web",
+      "link"
+    ],
+    "examples": [
+      "open example.com",
+      "visit this website in the browser"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "open_url"
+  }
+}

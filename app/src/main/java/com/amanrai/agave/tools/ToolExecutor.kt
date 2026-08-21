@@ -2,6 +2,7 @@ package com.amanrai.agave.tools
 
 import android.content.Context
 import android.media.AudioManager
+import com.amanrai.agave.skills.SkillCatalog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.ZoneId
@@ -16,7 +17,10 @@ data class ToolExecution(
     val windowBrightness: Float? = null,
 )
 
-class ToolExecutor(context: Context) {
+class ToolExecutor(
+    context: Context,
+    private val skills: SkillCatalog,
+) {
     private val audioManager = context.applicationContext
         .getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -50,18 +54,27 @@ class ToolExecutor(context: Context) {
         }
     }
 
-    private fun executeOne(name: String, arguments: JSONObject): HandledTool = when (name) {
-        "get_time" -> HandledTool(executeGetTime(arguments))
-        "set_brightness" -> executeSetBrightness(arguments)
-        "set_volume" -> HandledTool(executeSetVolume(arguments))
-        "set_led" -> HandledTool(
-            JSONObject()
-                .put("name", name)
-                .put("status", "ok")
-                .put("result", JSONObject().put("message", "LED preview updated")),
-        )
-        "get_weather" -> HandledTool(errorResult(name, "No weather provider is configured yet."))
-        else -> HandledTool(errorResult(name.ifBlank { "unknown" }, "Tool is not registered."))
+    private fun executeOne(name: String, arguments: JSONObject): HandledTool {
+        val skill = skills.findEnabledTool(name)
+            ?: return HandledTool(errorResult(name.ifBlank { "unknown" }, "Skill is not enabled."))
+        if (skill.execution.runtime == "selection_only") {
+            return HandledTool(
+                errorResult(name, "This skill is available for selection experiments only."),
+            )
+        }
+        if (skill.execution.runtime != "android") {
+            return HandledTool(
+                errorResult(name, "Runtime '${skill.execution.runtime}' is not available yet."),
+            )
+        }
+        return when (skill.execution.entrypoint) {
+            "get_time" -> HandledTool(executeGetTime(arguments))
+            "set_brightness" -> executeSetBrightness(arguments)
+            "set_volume" -> HandledTool(executeSetVolume(arguments))
+            else -> HandledTool(
+                errorResult(name, "Android entrypoint '${skill.execution.entrypoint}' is not registered."),
+            )
+        }
     }
 
     private fun executeGetTime(arguments: JSONObject): JSONObject {

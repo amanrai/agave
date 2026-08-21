@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "get_time",
+  "version": 1,
+  "order": 30,
+  "enabled": true,
+  "tool": {
+    "name": "get_time",
+    "description": "Get clock time; use here for the current location",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "city or place; here is a valid current location"
+        }
+      }
+    }
+  },
+  "retrieval": {
+    "tags": ["time", "clock", "date", "timezone", "hour"],
+    "examples": ["what time is it", "current time in Tokyo", "what is today's date"]
+  },
+  "execution": {
+    "runtime": "android",
+    "entrypoint": "get_time"
+  }
+}

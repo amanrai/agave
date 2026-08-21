@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "record_audio",
+  "version": 1,
+  "order": 280,
+  "enabled": true,
+  "tool": {
+    "name": "record_audio",
+    "description": "Record audio from the microphone",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "duration_seconds": {
+          "type": "number",
+          "description": "recording duration in seconds",
+          "maximum": 300
+        }
+      },
+      "required": [
+        "duration_seconds"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "record",
+      "audio",
+      "microphone",
+      "voice",
+      "sound",
+      "duration"
+    ],
+    "examples": [
+      "record audio for ten seconds",
+      "capture a voice note"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "record_audio"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "set_volume",
+  "version": 1,
+  "order": 50,
+  "enabled": true,
+  "tool": {
+    "name": "set_volume",
+    "description": "Change Android media audio volume",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "volume_percent": {
+          "type": "number",
+          "description": "audio volume from 0 to 100",
+          "maximum": 100
+        }
+      },
+      "required": ["volume_percent"]
+    }
+  },
+  "retrieval": {
+    "tags": ["volume", "audio", "sound", "media", "loud", "quiet", "mute"],
+    "examples": ["turn down the volume", "set media volume to thirty percent"]
+  },
+  "execution": {
+    "runtime": "android",
+    "entrypoint": "set_volume"
+  }
+}

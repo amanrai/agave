@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "set_brightness",
+  "version": 1,
+  "order": 40,
+  "enabled": true,
+  "tool": {
+    "name": "set_brightness",
+    "description": "Change only the Agave screen brightness",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "brightness_percent": {
+          "type": "number",
+          "description": "screen brightness from 0 to 100",
+          "maximum": 100
+        }
+      },
+      "required": ["brightness_percent"]
+    }
+  },
+  "retrieval": {
+    "tags": ["brightness", "screen", "display", "dim", "brighten", "light level"],
+    "examples": ["dim the screen", "set brightness to fifty percent"]
+  },
+  "execution": {
+    "runtime": "android",
+    "entrypoint": "set_brightness"
+  }
+}

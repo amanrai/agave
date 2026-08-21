@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "set_exact_alarm",
+  "version": 1,
+  "order": 370,
+  "enabled": true,
+  "tool": {
+    "name": "set_exact_alarm",
+    "description": "Schedule an exact background alarm",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string",
+          "description": "exact alarm date and time"
+        },
+        "label": {
+          "type": "string",
+          "description": "optional alarm label"
+        }
+      },
+      "required": [
+        "time"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "exact alarm",
+      "background alarm",
+      "schedule",
+      "time",
+      "wake"
+    ],
+    "examples": [
+      "schedule an exact alarm at midnight",
+      "set a precise background alarm"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "set_exact_alarm"
+  }
+}

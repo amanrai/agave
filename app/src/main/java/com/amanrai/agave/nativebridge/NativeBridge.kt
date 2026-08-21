@@ -13,9 +13,17 @@ object NativeBridge {
         callbacks: NativeCallbacks,
     ): String?
 
+    external fun configureTools(
+        toolsJson: ByteArray,
+        callbacks: NativeCallbacks,
+    ): String?
+
+    external fun schemaPrefixTokenCount(toolsJson: ByteArray): Int
+
     external fun generate(
         query: ByteArray,
         showThinking: Boolean,
+        requireToolCall: Boolean,
         maxNewTokens: Int,
         callbacks: NativeCallbacks,
     ): String?

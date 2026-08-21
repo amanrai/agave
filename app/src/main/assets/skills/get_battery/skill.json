@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "get_battery",
+  "version": 1,
+  "order": 100,
+  "enabled": true,
+  "tool": {
+    "name": "get_battery",
+    "description": "Get battery charge and charging state",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "battery",
+      "charge",
+      "charging",
+      "power",
+      "temperature",
+      "percent"
+    ],
+    "examples": [
+      "how much battery is left",
+      "is the phone charging"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_battery"
+  }
+}

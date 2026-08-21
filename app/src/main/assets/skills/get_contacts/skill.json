@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "get_contacts",
+  "version": 1,
+  "order": 300,
+  "enabled": true,
+  "tool": {
+    "name": "get_contacts",
+    "description": "Search Android contacts",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "name or contact search text"
+        }
+      }
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "contacts",
+      "people",
+      "address book",
+      "phone number",
+      "email",
+      "search"
+    ],
+    "examples": [
+      "find Alice in my contacts",
+      "search contacts",
+      "show contact details"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_contacts"
+  }
+}

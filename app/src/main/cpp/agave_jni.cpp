@@ -250,6 +250,50 @@ static int prime_prefix(CallbackSink &sink, std::string &error) {
     return 0;
 }
 
+static int configure_tools(JNIEnv *env, jbyteArray tools_json, CallbackSink &sink,
+                           std::string &error) {
+    const std::string raw_tools = take_bytes(env, tools_json);
+    std::vector<char> compact(raw_tools.size() + 1);
+    const int compact_len = nd_json_compact(raw_tools.data(), raw_tools.size(), compact.data(),
+                                            compact.size());
+    if (compact_len < 0) {
+        error = "The skill schemas could not be compacted.";
+        return -1;
+    }
+
+    nd_grammar compiled{};
+    const char *grammar_error = nullptr;
+    if (nd_grammar_compile(&compiled, compact.data(), static_cast<size_t>(compact_len),
+                           &grammar_error) != 0) {
+        const std::string message = grammar_error ? grammar_error : "unknown grammar error";
+        error = "Skill grammar failed: " + message;
+        return -1;
+    }
+
+    g_tools_json.assign(compact.data(), static_cast<size_t>(compact_len));
+    g_grammar = compiled;
+    if (prime_prefix(sink, error) != 0)
+        return -1;
+    return 0;
+}
+
+static int schema_prefix_token_count(JNIEnv *env, jbyteArray tools_json) {
+    const std::string raw_tools = take_bytes(env, tools_json);
+    std::vector<char> compact(raw_tools.size() + 1);
+    const int compact_len = nd_json_compact(raw_tools.data(), raw_tools.size(), compact.data(),
+                                            compact.size());
+    if (compact_len < 0)
+        return -1;
+    const std::string prefix =
+        "<|im_start|>user\n<tools>" +
+        std::string(compact.data(), static_cast<size_t>(compact_len)) +
+        "</tools>\nlocation: here";
+    std::vector<uint32_t> ids(2048);
+    const int encoded = nd_tok_encode(&g_model.tok, prefix.data(), prefix.size(), ids.data(),
+                                      static_cast<uint32_t>(ids.size()));
+    return encoded < 0 ? -1 : encoded + 1; /* include the explicit BOS used by priming */
+}
+
 }  // namespace
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -288,32 +332,8 @@ Java_com_amanrai_agave_nativebridge_NativeBridge_initialize(
     g_model_open = true;
     nd_parallel_rows = parallel_rows;
 
-    const std::string raw_tools = take_bytes(env, tools_json);
-    std::vector<char> compact(raw_tools.size() + 1);
-    const int compact_len = nd_json_compact(raw_tools.data(), raw_tools.size(), compact.data(),
-                                            compact.size());
-    if (compact_len < 0) {
-        nd_model_close(&g_model);
-        g_model_open = false;
-        std::free(g_blob);
-        g_blob = nullptr;
-        return error_string(env, "The bundled tool schema could not be compacted.");
-    }
-    g_tools_json.assign(compact.data(), static_cast<size_t>(compact_len));
-
-    const char *grammar_error = nullptr;
-    if (nd_grammar_compile(&g_grammar, g_tools_json.data(), g_tools_json.size(),
-                           &grammar_error) != 0) {
-        const std::string message = grammar_error ? grammar_error : "unknown grammar error";
-        nd_model_close(&g_model);
-        g_model_open = false;
-        std::free(g_blob);
-        g_blob = nullptr;
-        return error_string(env, "Tool grammar failed: " + message);
-    }
-
     std::string prime_error;
-    if (prime_prefix(sink, prime_error) != 0) {
+    if (configure_tools(env, tools_json, sink, prime_error) != 0) {
         nd_model_close(&g_model);
         g_model_open = false;
         std::free(g_blob);
@@ -326,9 +346,33 @@ Java_com_amanrai_agave_nativebridge_NativeBridge_initialize(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
+Java_com_amanrai_agave_nativebridge_NativeBridge_configureTools(
+    JNIEnv *env, jobject, jbyteArray tools_json, jobject callbacks) {
+    std::lock_guard<std::mutex> lock(g_inference_mu);
+    CallbackSink sink(env, callbacks);
+    if (!sink.valid()) return error_string(env, "Native callback methods could not be resolved.");
+    if (!g_model_open) return error_string(env, "Needle 2 is not loaded yet.");
+
+    g_ready = false;
+    std::string error;
+    if (configure_tools(env, tools_json, sink, error) != 0)
+        return error_string(env, error);
+    g_ready = true;
+    return nullptr;
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_amanrai_agave_nativebridge_NativeBridge_schemaPrefixTokenCount(
+    JNIEnv *env, jobject, jbyteArray tools_json) {
+    std::lock_guard<std::mutex> lock(g_inference_mu);
+    if (!g_model_open) return -1;
+    return schema_prefix_token_count(env, tools_json);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_amanrai_agave_nativebridge_NativeBridge_generate(
     JNIEnv *env, jobject, jbyteArray query_value, jboolean show_thinking,
-    jint max_new_tokens, jobject callbacks) {
+    jboolean require_tool_call, jint max_new_tokens, jobject callbacks) {
     std::lock_guard<std::mutex> lock(g_inference_mu);
     CallbackSink sink(env, callbacks);
     if (!sink.valid()) return error_string(env, "Native callback methods could not be resolved.");
@@ -340,8 +384,10 @@ Java_com_amanrai_agave_nativebridge_NativeBridge_generate(
     const auto request_start = Clock::now();
     nd_model_rewind(&g_model);
 
+    nd_grammar active_grammar = g_grammar;
+    active_grammar.require_call = require_tool_call ? 1 : 0;
     nd_sampler sampler;
-    nd_sampler_init(&sampler, &g_model.tok, &g_grammar);
+    nd_sampler_init(&sampler, &g_model.tok, &active_grammar);
 
     std::string normalized_query = query;
     std::transform(normalized_query.begin(), normalized_query.end(), normalized_query.begin(),

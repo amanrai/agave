@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "get_weather",
+  "version": 1,
+  "order": 20,
+  "enabled": true,
+  "tool": {
+    "name": "get_weather",
+    "description": "Get weather; use here for the current location",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "city or place; here is a valid current location"
+        }
+      }
+    }
+  },
+  "retrieval": {
+    "tags": ["weather", "temperature", "rain", "forecast", "climate", "conditions"],
+    "examples": ["what is the weather", "will it rain", "temperature in London"]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_weather"
+  }
+}

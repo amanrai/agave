@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "set_timer",
+  "version": 1,
+  "order": 340,
+  "enabled": true,
+  "tool": {
+    "name": "set_timer",
+    "description": "Start a countdown timer",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "duration_seconds": {
+          "type": "integer",
+          "description": "timer duration in seconds",
+          "maximum": 86400
+        },
+        "label": {
+          "type": "string",
+          "description": "optional timer label"
+        }
+      },
+      "required": [
+        "duration_seconds"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "timer",
+      "countdown",
+      "duration",
+      "seconds",
+      "minutes",
+      "clock"
+    ],
+    "examples": [
+      "set a timer for five minutes",
+      "start a thirty second countdown"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "set_timer"
+  }
+}

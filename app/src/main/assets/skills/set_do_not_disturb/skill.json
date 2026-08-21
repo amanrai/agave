@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "set_do_not_disturb",
+  "version": 1,
+  "order": 350,
+  "enabled": true,
+  "tool": {
+    "name": "set_do_not_disturb",
+    "description": "Enable or disable Android Do Not Disturb",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "true to enable; false to disable"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "do not disturb",
+      "dnd",
+      "silence",
+      "interruptions",
+      "notifications"
+    ],
+    "examples": [
+      "turn on do not disturb",
+      "disable DND"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "set_do_not_disturb"
+  }
+}

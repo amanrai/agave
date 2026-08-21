@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "get_step_count",
+  "version": 1,
+  "order": 330,
+  "enabled": true,
+  "tool": {
+    "name": "get_step_count",
+    "description": "Get the device step count for a period",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string",
+          "description": "time period for steps",
+          "enum": [
+            "today",
+            "week",
+            "month"
+          ]
+        }
+      },
+      "required": [
+        "period"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "steps",
+      "step count",
+      "walking",
+      "activity",
+      "fitness",
+      "today",
+      "week"
+    ],
+    "examples": [
+      "how many steps today",
+      "show my weekly step count"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_step_count"
+  }
+}

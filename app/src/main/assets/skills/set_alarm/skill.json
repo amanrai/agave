@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "set_alarm",
+  "version": 1,
+  "order": 250,
+  "enabled": true,
+  "tool": {
+    "name": "set_alarm",
+    "description": "Create an alarm through the Android clock app",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string",
+          "description": "alarm time"
+        },
+        "label": {
+          "type": "string",
+          "description": "optional alarm label"
+        }
+      },
+      "required": [
+        "time"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "alarm",
+      "clock",
+      "wake",
+      "time",
+      "morning",
+      "reminder"
+    ],
+    "examples": [
+      "set an alarm for 7 AM",
+      "wake me at six thirty"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "set_alarm"
+  }
+}

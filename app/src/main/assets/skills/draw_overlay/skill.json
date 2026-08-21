@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "draw_overlay",
+  "version": 1,
+  "order": 360,
+  "enabled": true,
+  "tool": {
+    "name": "draw_overlay",
+    "description": "Show text over other Android apps",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "text to display in the overlay"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "overlay",
+      "display over apps",
+      "floating",
+      "draw over",
+      "text"
+    ],
+    "examples": [
+      "show this text over other apps",
+      "display a floating overlay"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "draw_overlay"
+  }
+}

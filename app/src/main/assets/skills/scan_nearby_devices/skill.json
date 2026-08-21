@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "scan_nearby_devices",
+  "version": 1,
+  "order": 320,
+  "enabled": true,
+  "tool": {
+    "name": "scan_nearby_devices",
+    "description": "Scan for nearby Bluetooth devices",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "nearby",
+      "bluetooth",
+      "devices",
+      "scan",
+      "discover",
+      "wireless"
+    ],
+    "examples": [
+      "scan for nearby devices",
+      "find Bluetooth devices around me"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "scan_nearby_devices"
+  }
+}

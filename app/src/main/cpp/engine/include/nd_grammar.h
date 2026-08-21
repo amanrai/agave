@@ -15,10 +15,11 @@
  * machine. State is a small POD struct so the sampler can copy it, trial-run
  * a token's bytes, and throw the copy away - no allocation per candidate.
  *
- * Deliberate scope: string (with enum), integer, number and boolean values,
- * which is what device-control schemas use. Nested objects and arrays are
- * rejected at compile time rather than silently unconstrained, so we never
- * believe we are enforcing a schema we are not.
+ * Deliberate scope: string (with enum), string arrays, integer, number and
+ * boolean values, which is what device-control schemas use. Nested objects
+ * and other array item types are rejected at compile time rather than
+ * silently unconstrained, so we never believe we are enforcing a schema we
+ * are not.
  */
 #ifndef ND_GRAMMAR_H
 #define ND_GRAMMAR_H
@@ -39,7 +40,8 @@ typedef enum {
     ND_T_STRING = 0,
     ND_T_INTEGER,
     ND_T_NUMBER,
-    ND_T_BOOLEAN
+    ND_T_BOOLEAN,
+    ND_T_STRING_ARRAY
 } nd_vtype;
 
 typedef struct {
@@ -49,6 +51,8 @@ typedef struct {
     char     enums[ND_GR_MAX_ENUM][ND_GR_STRLEN];
     uint8_t  has_min, has_max;
     double   min, max;
+    uint8_t  min_items, max_items;
+    uint8_t  items_string;
 } nd_prop;
 
 typedef struct {
@@ -60,6 +64,7 @@ typedef struct {
 
 typedef struct {
     uint8_t  n_tools;
+    uint8_t  require_call;         /* runtime option: reject an empty [] call */
     nd_tool  tools[ND_GR_MAX_TOOLS];
 } nd_grammar;
 
@@ -98,6 +103,10 @@ typedef enum {
     ND_G_VAL_ENUM,
     ND_G_VAL_NUM,
     ND_G_VAL_BOOL,
+    ND_G_VAL_ARR_FIRST,
+    ND_G_VAL_ARR_STR,
+    ND_G_VAL_ARR_NEXT,
+    ND_G_VAL_ARR_AFTER,
     ND_G_AFTER_VAL,
     ND_G_AFTER_OBJ,    /* arguments object closed; expect the call's '}' */
     ND_G_CLOSE_CALL,   /* call object closed; expect ',' or ']' */
@@ -115,6 +124,7 @@ typedef struct {
     uint8_t  num_frac;             /* seen a '.' */
     uint8_t  num_any;              /* seen at least one digit */
     uint8_t  num_neg;
+    uint8_t  arr_count;
     double   num_val;
     double   num_scale;            /* fractional place value */
     const char *lit;               /* literal being matched, when fixed */

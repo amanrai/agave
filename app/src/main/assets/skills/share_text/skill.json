@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "share_text",
+  "version": 1,
+  "order": 170,
+  "enabled": true,
+  "tool": {
+    "name": "share_text",
+    "description": "Share text through the Android share sheet",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "text to share"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "share",
+      "send",
+      "text",
+      "share sheet",
+      "chooser"
+    ],
+    "examples": [
+      "share this text",
+      "send this through another app"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "share_text"
+  }
+}

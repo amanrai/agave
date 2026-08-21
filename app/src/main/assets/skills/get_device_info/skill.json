@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "get_device_info",
+  "version": 1,
+  "order": 110,
+  "enabled": true,
+  "tool": {
+    "name": "get_device_info",
+    "description": "Get Android device and screen information",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "device",
+      "phone",
+      "model",
+      "android",
+      "version",
+      "orientation",
+      "screen",
+      "dimensions"
+    ],
+    "examples": [
+      "what phone is this",
+      "show device information",
+      "what Android version is running"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_device_info"
+  }
+}

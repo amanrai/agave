@@ -1,18 +1,18 @@
 # Known limitations
 
-## Tool retrieval is not implemented
+## BM25 substitutes for the missing retrieval head
 
-The independent C99 engine does not implement Needle 2's contrastive tool-retrieval head. The official runtime retrieves the five most relevant schemas when a catalog contains more than five tools; this port instead places every schema directly in the prompt.
+The independent C99 engine does not implement Needle 2's contrastive tool-retrieval head. Agave instead uses a visible two-stage experiment: Needle first calls `find_tool`, an in-memory BM25 index ranks skills from the generated keywords, and Needle runs again with a candidate subset.
 
-Needle 2 has a 256-token sliding attention window. Tool schemas are pinned as KV sinks, but a large schema catalog can consume most or all usable context before the request is added. In practice, this implementation should be treated as supporting roughly two or three detailed tools at once.
+This workaround has important limitations:
 
-Agave currently bundles five compact schemas: `set_led`, `get_weather`, `get_time`, `set_brightness`, and `set_volume`. Routing has become sensitive to schema wording at this size, so every schema change must be tested against all tools. Before adding a broader Home Assistant catalog, evaluate one of these approaches:
+- BM25 is lexical and has no semantic vector representation.
+- Retrieval quality depends on Needle's generated keywords and manifest tags/examples.
+- Candidate schemas are packed under a 210-token prefix budget; a relevant schema may be excluded.
+- Recompiling, re-priming candidates, and restoring `find_tool` adds substantial latency.
+- The result measures a combined keyword-generation/BM25/selection pipeline, not the unavailable contrastive head.
 
-1. Port the contrastive retrieval head to the C99 engine.
-2. Perform a separate local schema-retrieval pass and expose only a small selected subset to Needle.
-3. Adopt an official runtime API if Cactus exposes both Needle-compatible loading and token callbacks.
-
-This limitation must not be hidden by silently truncating the catalog: if the correct schema is absent from the active subset, grammar-constrained decoding makes that tool impossible to call.
+The full routing trace is displayed and persisted so retrieval recall and conditional tool selection can be evaluated separately. A future vector or hybrid retriever can implement the same retrieval interface without changing the two-stage flow.
 
 ## CPU backend
 
@@ -20,13 +20,13 @@ Inference uses portable C99 kernels and a small Android CPU thread pool. It does
 
 ## Fixed tools and partial execution
 
-The schemas are bundled and cannot be edited in the app. `get_time`, `set_brightness`, and `set_volume` execute locally; `set_led` updates only the preview; and `get_weather` returns an explicit error until a weather provider is configured.
+Bundled skill definitions are read-only APK assets. The catalog supports private-storage overrides, but Agave does not yet provide an on-device skill editor or live schema reload. `get_time`, `set_brightness`, and `set_volume` execute locally. The other 33 retrievable skills are selection experiments only and return an explicit non-execution result.
 
 Time lookup supports `here`, selected common city aliases, and valid IANA time-zone IDs. It is not a general geocoder. Brightness affects only the Agave window and resets when that window is recreated. Volume controls Android's device media stream and is quantized to the hardware volume steps.
 
 ## Session semantics
 
-Every request rewinds to the same primed schema prefix. Interaction records persist, but prior interactions are not fed back into the model as conversational context.
+The waiting state always uses the primed `find_tool` prefix. Candidate selection uses a temporary candidate-specific prefix, then restores `find_tool`. Interaction records persist, but prior interactions are not fed back into either inference pass as conversational context.
 
 ## Model lifecycle
 

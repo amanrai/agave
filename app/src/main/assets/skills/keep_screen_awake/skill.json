@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "keep_screen_awake",
+  "version": 1,
+  "order": 130,
+  "enabled": true,
+  "tool": {
+    "name": "keep_screen_awake",
+    "description": "Keep the Agave screen awake or allow sleep",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "true to keep awake; false to allow sleep"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "screen",
+      "awake",
+      "sleep",
+      "timeout",
+      "display",
+      "keep on"
+    ],
+    "examples": [
+      "keep the screen awake",
+      "allow the screen to sleep"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "keep_screen_awake"
+  }
+}

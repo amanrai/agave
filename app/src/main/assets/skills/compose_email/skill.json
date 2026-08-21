@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "compose_email",
+  "version": 1,
+  "order": 200,
+  "enabled": true,
+  "tool": {
+    "name": "compose_email",
+    "description": "Compose an email draft without sending it",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "type": "string",
+          "description": "email address"
+        },
+        "subject": {
+          "type": "string",
+          "description": "email subject"
+        },
+        "body": {
+          "type": "string",
+          "description": "email body"
+        }
+      },
+      "required": [
+        "recipient"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "email",
+      "mail",
+      "compose",
+      "draft",
+      "recipient",
+      "subject"
+    ],
+    "examples": [
+      "draft an email to alex@example.com",
+      "compose an email with this subject"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "compose_email"
+  }
+}

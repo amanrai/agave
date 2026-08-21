@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "post_notification",
+  "version": 1,
+  "order": 290,
+  "enabled": true,
+  "tool": {
+    "name": "post_notification",
+    "description": "Post an Android notification",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "notification title"
+        },
+        "message": {
+          "type": "string",
+          "description": "notification message"
+        }
+      },
+      "required": [
+        "title",
+        "message"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "notification",
+      "notify",
+      "alert",
+      "message",
+      "remind"
+    ],
+    "examples": [
+      "post a notification saying lunch is ready",
+      "notify me with this message"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "post_notification"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "get_connectivity",
+  "version": 1,
+  "order": 230,
+  "enabled": true,
+  "tool": {
+    "name": "get_connectivity",
+    "description": "Get the active Android network connection",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "network",
+      "connectivity",
+      "wifi",
+      "cellular",
+      "mobile data",
+      "internet",
+      "offline"
+    ],
+    "examples": [
+      "am I connected to Wi-Fi",
+      "what network is active",
+      "is the phone online"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "get_connectivity"
+  }
+}

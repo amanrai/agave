@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "speak_text",
+  "version": 1,
+  "order": 140,
+  "enabled": true,
+  "tool": {
+    "name": "speak_text",
+    "description": "Speak text aloud with Android text to speech",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "text to speak aloud"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "speak",
+      "say",
+      "read aloud",
+      "voice",
+      "text to speech",
+      "tts"
+    ],
+    "examples": [
+      "say hello aloud",
+      "read this text to me"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "speak_text"
+  }
+}

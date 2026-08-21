@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "capture_screen",
+  "version": 1,
+  "order": 380,
+  "enabled": true,
+  "tool": {
+    "name": "capture_screen",
+    "description": "Capture the Android screen",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "screen capture",
+      "screenshot",
+      "record screen",
+      "display",
+      "capture"
+    ],
+    "examples": [
+      "take a screenshot",
+      "capture what is on the screen"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "capture_screen"
+  }
+}

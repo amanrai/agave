@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "take_photo",
+  "version": 1,
+  "order": 270,
+  "enabled": true,
+  "tool": {
+    "name": "take_photo",
+    "description": "Take a photo with an Android camera",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "camera": {
+          "type": "string",
+          "description": "camera to use",
+          "enum": [
+            "rear",
+            "front"
+          ]
+        }
+      },
+      "required": [
+        "camera"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "photo",
+      "picture",
+      "camera",
+      "selfie",
+      "rear",
+      "front"
+    ],
+    "examples": [
+      "take a photo",
+      "take a selfie",
+      "use the rear camera"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "take_photo"
+  }
+}

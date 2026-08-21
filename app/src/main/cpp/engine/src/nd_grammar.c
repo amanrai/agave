@@ -147,6 +147,7 @@ static int parse_type(const char *s, uint8_t *out)
     if (!strcmp(s, "integer")) { *out = ND_T_INTEGER; return 1; }
     if (!strcmp(s, "number"))  { *out = ND_T_NUMBER;  return 1; }
     if (!strcmp(s, "boolean")) { *out = ND_T_BOOLEAN; return 1; }
+    if (!strcmp(s, "array"))   { *out = ND_T_STRING_ARRAY; return 1; }
     return 0;
 }
 
@@ -155,6 +156,7 @@ static int parse_prop(jr *j, nd_prop *p, const char **err)
     char key[64];
 
     p->type = ND_T_STRING;
+    p->max_items = 255;
     if (!jeat(j, '{')) { *err = "property is not an object"; return -1; }
     if (jeat(j, '}'))
         return 0;
@@ -167,9 +169,31 @@ static int parse_prop(jr *j, nd_prop *p, const char **err)
             char t[32];
             if (!jstring(j, t, sizeof(t))) { *err = "bad type"; return -1; }
             if (!parse_type(t, &p->type)) {
-                *err = "unsupported type (object/array/null not supported)";
+                *err = "unsupported type (object/null or non-string array not supported)";
                 return -1;
             }
+        } else if (!strcmp(key, "items")) {
+            char item_key[32];
+            int string_type = 0;
+            if (!jeat(j, '{')) { *err = "items is not an object"; return -1; }
+            if (!jeat(j, '}')) {
+                for (;;) {
+                    if (!jstring(j, item_key, sizeof(item_key))) { *err = "bad items key"; return -1; }
+                    if (!jeat(j, ':')) { *err = "expected ':'"; return -1; }
+                    if (!strcmp(item_key, "type")) {
+                        char item_type[32];
+                        if (!jstring(j, item_type, sizeof(item_type))) { *err = "bad item type"; return -1; }
+                        if (strcmp(item_type, "string")) { *err = "only string array items are supported"; return -1; }
+                        string_type = 1;
+                    } else if (!jskip(j)) {
+                        *err = "bad items value"; return -1;
+                    }
+                    if (jeat(j, ',')) continue;
+                    if (jeat(j, '}')) break;
+                    *err = "malformed items"; return -1;
+                }
+            }
+            p->items_string = (uint8_t)string_type;
         } else if (!strcmp(key, "enum")) {
             if (!jeat(j, '[')) { *err = "enum is not an array"; return -1; }
             if (!jeat(j, ']')) {
@@ -190,6 +214,13 @@ static int parse_prop(jr *j, nd_prop *p, const char **err)
         } else if (!strcmp(key, "maximum")) {
             if (!jnumber(j, &p->max)) { *err = "bad maximum"; return -1; }
             p->has_max = 1;
+        } else if (!strcmp(key, "minItems") || !strcmp(key, "maxItems")) {
+            double count;
+            if (!jnumber(j, &count) || count < 0 || count > 255 || count != (uint8_t)count) {
+                *err = "bad array item bound"; return -1;
+            }
+            if (!strcmp(key, "minItems")) p->min_items = (uint8_t)count;
+            else p->max_items = (uint8_t)count;
         } else {
             if (!jskip(j)) { *err = "bad property value"; return -1; }
         }
@@ -197,6 +228,10 @@ static int parse_prop(jr *j, nd_prop *p, const char **err)
         if (jeat(j, ',')) continue;
         if (jeat(j, '}')) break;
         *err = "malformed property"; return -1;
+    }
+    if (p->type == ND_T_STRING_ARRAY) {
+        if (!p->items_string) { *err = "array items.type must be string"; return -1; }
+        if (p->max_items < p->min_items) { *err = "maxItems is smaller than minItems"; return -1; }
     }
     return 0;
 }
@@ -416,7 +451,11 @@ int nd_gstate_byte(nd_gstate *s, char c)
         return 1;
 
     case ND_G_ARRAY_FIRST:
-        if (c == ']') { s->phase = ND_G_DONE; return 1; }   /* the empty call */
+        if (c == ']') {
+            if (g->require_call) return 0;
+            s->phase = ND_G_DONE;
+            return 1;
+        }
         if (c != '{') return 0;
         s->cand = (uint16_t)((1u << g->n_tools) - 1u);
         s->lit  = "\"name\":\"";
@@ -542,6 +581,11 @@ int nd_gstate_byte(nd_gstate *s, char c)
             if (c == 't') { s->lit = "true";  s->lit_pos = 1; s->phase = ND_G_VAL_BOOL; return 1; }
             if (c == 'f') { s->lit = "false"; s->lit_pos = 1; s->phase = ND_G_VAL_BOOL; return 1; }
             return 0;
+        case ND_T_STRING_ARRAY:
+            if (c != '[') return 0;
+            s->arr_count = 0;
+            s->phase = ND_G_VAL_ARR_FIRST;
+            return 1;
         case ND_T_INTEGER:
         case ND_T_NUMBER:
             s->num_val = 0;
@@ -604,6 +648,54 @@ int nd_gstate_byte(nd_gstate *s, char c)
             s->phase = ND_G_AFTER_VAL;
         }
         return 1;
+
+    case ND_G_VAL_ARR_FIRST: {
+        const nd_prop *p = &t->props[s->prop];
+        if (c == ']') {
+            if (p->min_items > 0) return 0;
+            s->seen |= (uint16_t)(1u << s->prop);
+            s->phase = ND_G_AFTER_VAL;
+            return 1;
+        }
+        if (c != '"' || p->max_items == 0) return 0;
+        s->lit_pos = 0;
+        s->phase = ND_G_VAL_ARR_STR;
+        return 1;
+    }
+
+    case ND_G_VAL_ARR_NEXT:
+        if (c != '"') return 0;
+        s->lit_pos = 0;
+        s->phase = ND_G_VAL_ARR_STR;
+        return 1;
+
+    case ND_G_VAL_ARR_STR:
+        if (c == '"') {
+            s->arr_count++;
+            s->phase = ND_G_VAL_ARR_AFTER;
+            return 1;
+        }
+        if ((unsigned char)c < 0x20 || c == '\\')
+            return 0;
+        if (s->lit_pos < 255)
+            s->lit_pos++;
+        return 1;
+
+    case ND_G_VAL_ARR_AFTER: {
+        const nd_prop *p = &t->props[s->prop];
+        if (c == ',') {
+            if (s->arr_count >= p->max_items) return 0;
+            s->phase = ND_G_VAL_ARR_NEXT;
+            return 1;
+        }
+        if (c == ']') {
+            if (s->arr_count < p->min_items) return 0;
+            s->seen |= (uint16_t)(1u << s->prop);
+            s->phase = ND_G_AFTER_VAL;
+            return 1;
+        }
+        return 0;
+    }
 
     case ND_G_VAL_NUM: {
         const nd_prop *p = &t->props[s->prop];

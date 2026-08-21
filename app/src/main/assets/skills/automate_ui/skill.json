@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "automate_ui",
+  "version": 1,
+  "order": 410,
+  "enabled": true,
+  "tool": {
+    "name": "automate_ui",
+    "description": "Perform a described Android interface action",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "instruction": {
+          "type": "string",
+          "description": "interface action to perform"
+        }
+      },
+      "required": [
+        "instruction"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "automation",
+      "accessibility",
+      "tap",
+      "swipe",
+      "type",
+      "interface",
+      "ui",
+      "control app"
+    ],
+    "examples": [
+      "tap the continue button",
+      "scroll down in the current app",
+      "perform this UI action"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "automate_ui"
+  }
+}

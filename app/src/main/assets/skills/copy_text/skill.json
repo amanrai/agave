@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "copy_text",
+  "version": 1,
+  "order": 180,
+  "enabled": true,
+  "tool": {
+    "name": "copy_text",
+    "description": "Copy text to the Android clipboard",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "text to copy"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "copy",
+      "clipboard",
+      "paste",
+      "text"
+    ],
+    "examples": [
+      "copy this to the clipboard",
+      "save this text for pasting"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "copy_text"
+  }
+}

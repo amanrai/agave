@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "dial_number",
+  "version": 1,
+  "order": 210,
+  "enabled": true,
+  "tool": {
+    "name": "dial_number",
+    "description": "Open a phone number in the dialer without calling",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "phone_number": {
+          "type": "string",
+          "description": "phone number to place in the dialer"
+        }
+      },
+      "required": [
+        "phone_number"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "dial",
+      "phone",
+      "number",
+      "call",
+      "dialer"
+    ],
+    "examples": [
+      "dial this phone number",
+      "open the dialer for 5551234"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "dial_number"
+  }
+}

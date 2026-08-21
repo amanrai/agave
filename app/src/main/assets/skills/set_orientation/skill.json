@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "set_orientation",
+  "version": 1,
+  "order": 120,
+  "enabled": true,
+  "tool": {
+    "name": "set_orientation",
+    "description": "Set the Agave screen orientation",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "orientation": {
+          "type": "string",
+          "description": "portrait, landscape, or sensor",
+          "enum": [
+            "portrait",
+            "landscape",
+            "sensor"
+          ]
+        }
+      },
+      "required": [
+        "orientation"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "orientation",
+      "portrait",
+      "landscape",
+      "rotate",
+      "screen",
+      "sensor"
+    ],
+    "examples": [
+      "switch to landscape",
+      "lock Agave to portrait",
+      "use sensor rotation"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "set_orientation"
+  }
+}

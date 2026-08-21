@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "lock_device",
+  "version": 1,
+  "order": 390,
+  "enabled": true,
+  "tool": {
+    "name": "lock_device",
+    "description": "Lock the Android device",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "lock",
+      "device",
+      "screen",
+      "secure",
+      "sleep"
+    ],
+    "examples": [
+      "lock the phone",
+      "lock the device now"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "lock_device"
+  }
+}

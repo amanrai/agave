@@ -3,15 +3,8 @@ package com.amanrai.agave.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.SystemClock
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -38,7 +31,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
@@ -66,7 +58,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -108,8 +99,6 @@ import com.amanrai.agave.ui.theme.AgaveSunken
 import com.amanrai.agave.ui.theme.AgaveSurface
 import com.amanrai.agave.ui.theme.AgaveText
 import com.amanrai.agave.ui.theme.AgaveTextHigh
-import kotlinx.coroutines.delay
-import org.json.JSONArray
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -235,7 +224,12 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
     val current = state.current
     val listState = rememberLazyListState()
 
-    LaunchedEffect(current?.rawOutput?.length) {
+    LaunchedEffect(
+        current?.rawOutput?.length,
+        current?.routingReasoning?.length,
+        current?.routingToolCall?.length,
+        current?.routingResult?.length,
+    ) {
         if ((current?.rawOutput?.isNotEmpty() == true) && listState.layoutInfo.totalItemsCount > 0) {
             listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
         }
@@ -253,12 +247,47 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
         ) {
             if (current != null) {
                 item { PromptLine(current.prompt) }
-                if (current.status == "reading prompt") {
-                    item { InlineStatus("Reading your request", AgaveAccent) }
+                when {
+                    current.status == "finding skills" -> {
+                        item { InlineStatus("Generating find_tool keywords", AgaveCyan) }
+                    }
+                    current.status == "searching skill index" -> {
+                        item { InlineStatus("Searching the BM25 skill index", AgaveCyan) }
+                    }
+                    current.status.startsWith("loading ") -> {
+                        item { InlineStatus(current.status.replaceFirstChar { it.uppercase() }, AgaveCyan) }
+                    }
+                    current.status == "reading prompt" -> {
+                        item { InlineStatus("Reading your request with retrieved skills", AgaveAccent) }
+                    }
+                }
+                if (current.routingReasoning.isNotBlank()) {
+                    item {
+                        Panel(title = "1 · find_tool reasoning") {
+                            Text(
+                                text = current.routingReasoning,
+                                color = AgaveMuted,
+                                fontStyle = FontStyle.Italic,
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                            )
+                        }
+                    }
+                }
+                if (current.routingToolCall.isNotBlank()) {
+                    item {
+                        ToolExchangePanel(
+                            toolCall = current.routingToolCall,
+                            toolResult = current.routingResult,
+                            callTitle = "1 · find_tool input",
+                            resultTitle = "BM25 retrieval",
+                            waitingLabel = "Searching the skill index…",
+                        )
+                    }
                 }
                 if (current.reasoning.isNotBlank()) {
                     item {
-                        Panel(title = "Reasoning") {
+                        Panel(title = "2 · selected-tool reasoning") {
                             Text(
                                 text = current.reasoning,
                                 color = AgaveMuted,
@@ -270,7 +299,14 @@ private fun ConsoleScreen(state: AgaveUiState, onSubmit: (String) -> Unit) {
                     }
                 }
                 if (current.toolCall.isNotBlank()) {
-                    item { ToolExchangePanel(current.toolCall, current.toolResult) }
+                    item {
+                        ToolExchangePanel(
+                            toolCall = current.toolCall,
+                            toolResult = current.toolResult,
+                            callTitle = "2 · selected tool call",
+                            resultTitle = "Execution result",
+                        )
+                    }
                 }
                 if (current.error != null) {
                     item {
@@ -396,7 +432,13 @@ private fun InlineStatus(label: String, color: Color) {
 }
 
 @Composable
-private fun ToolExchangePanel(toolCall: String, toolResult: String) {
+private fun ToolExchangePanel(
+    toolCall: String,
+    toolResult: String,
+    callTitle: String = "Tool call",
+    resultTitle: String = "Result",
+    waitingLabel: String = "Waiting for the tool…",
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -404,7 +446,7 @@ private fun ToolExchangePanel(toolCall: String, toolResult: String) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ToolPayloadCard(
-            title = "Tool call",
+            title = callTitle,
             payload = toolCall,
             accent = AgaveCyan,
             modifier = Modifier
@@ -412,13 +454,13 @@ private fun ToolExchangePanel(toolCall: String, toolResult: String) {
                 .fillMaxHeight(),
         )
         ToolPayloadCard(
-            title = "Result",
+            title = resultTitle,
             payload = toolResult,
             accent = AgaveAccent,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
-            emptyLabel = "Waiting for the tool…",
+            emptyLabel = waitingLabel,
         )
     }
 }
@@ -479,144 +521,20 @@ private fun LiveFooter(interaction: LiveInteraction?) {
         tonalElevation = 6.dp,
         shadowElevation = 10.dp,
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(0.72f)
-                    .fillMaxHeight(),
-            ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(7.dp).background(AgaveCyan, CircleShape))
+                Spacer(Modifier.width(7.dp))
                 Text(
-                    "LED",
-                    color = AgaveMuted,
+                    "Live metrics",
+                    color = AgaveTextHigh,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Spacer(Modifier.height(8.dp))
-                LedPreview(interaction?.toolCall.orEmpty())
             }
-            Box(
-                Modifier
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(AgaveBorder),
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1.4f)
-                    .fillMaxHeight(),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(7.dp).background(AgaveCyan, CircleShape))
-                    Spacer(Modifier.width(7.dp))
-                    Text(
-                        "Live metrics",
-                        color = AgaveTextHigh,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                LiveMetrics(interaction)
-            }
+            Spacer(Modifier.height(10.dp))
+            LiveMetrics(interaction)
         }
-    }
-}
-
-@Composable
-private fun LedPreview(toolCall: String, honorDuration: Boolean = true) {
-    val action = remember(toolCall) { parseLedAction(toolCall) }
-    val requestedMode = action?.mode?.lowercase() ?: "off"
-    val colorName = action?.color ?: "white"
-    val color = ledColor(colorName)
-    val durationMs = ((action?.durationSeconds ?: 2.0) * 1000.0).toLong()
-        .coerceIn(1L, 30_000L)
-    var remainingMs by remember(toolCall, honorDuration) {
-        mutableStateOf(if (action != null && requestedMode != "off") durationMs else 0L)
-    }
-
-    LaunchedEffect(toolCall, honorDuration) {
-        if (honorDuration && action != null && requestedMode != "off") {
-            val deadline = SystemClock.elapsedRealtime() + durationMs
-            do {
-                remainingMs = (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
-                if (remainingMs > 0L) delay(100L)
-            } while (remainingMs > 0L)
-        }
-    }
-
-    val durationExpired = honorDuration && action != null &&
-        requestedMode != "off" && remainingMs <= 0L
-    val mode = if (durationExpired) "off" else requestedMode
-    val flashAlpha = if (mode == "flash") {
-        val transition = rememberInfiniteTransition(label = "LED flash")
-        val alpha by transition.animateFloat(
-            initialValue = 1f,
-            targetValue = 0.08f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 220),
-                repeatMode = RepeatMode.Reverse,
-            ),
-            label = "LED brightness",
-        )
-        alpha
-    } else {
-        1f
-    }
-    val displayColor = when (mode) {
-        "off" -> AgaveSunken
-        "flash" -> color.copy(alpha = flashAlpha)
-        else -> color
-    }
-    val secondsLabel = if (honorDuration) {
-        String.format(Locale.US, "%.1fs", remainingMs / 1000.0)
-    } else {
-        String.format(Locale.US, "%.1fs", durationMs / 1000.0)
-    }
-    val label = when {
-        durationExpired -> "off · duration complete"
-        mode == "off" -> "off"
-        mode == "flash" -> "$colorName · flash · $secondsLabel"
-        else -> "$colorName · solid · $secondsLabel"
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(76.dp)
-                .background(AgaveSunken, CircleShape)
-                .padding(7.dp)
-                .background(displayColor, CircleShape)
-                .border(
-                    1.dp,
-                    if (mode == "off") AgaveBorder else color.copy(alpha = 0.55f),
-                    CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (mode == "off") {
-                Icon(
-                    Icons.Default.Bolt,
-                    contentDescription = null,
-                    tint = AgaveFaint,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            label,
-            color = if (mode == "off") AgaveMuted else color,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-        )
     }
 }
 
@@ -851,9 +769,31 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
             }
         }
         item { PromptLine(item.prompt) }
+        if (item.routingReasoning.isNotBlank()) {
+            item {
+                Panel("1 · find_tool reasoning") {
+                    Text(
+                        item.routingReasoning,
+                        color = AgaveMuted,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+        }
+        if (item.routingToolCall.isNotBlank()) {
+            item {
+                ToolExchangePanel(
+                    toolCall = item.routingToolCall,
+                    toolResult = item.routingResult,
+                    callTitle = "1 · find_tool input",
+                    resultTitle = "BM25 retrieval",
+                )
+            }
+        }
         if (item.reasoning.isNotBlank()) {
             item {
-                Panel("Reasoning") {
+                Panel("2 · selected-tool reasoning") {
                     Text(
                         item.reasoning,
                         color = AgaveMuted,
@@ -864,7 +804,14 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
             }
         }
         if (item.toolCall.isNotBlank()) {
-            item { ToolExchangePanel(item.toolCall, item.toolResult) }
+            item {
+                ToolExchangePanel(
+                    toolCall = item.toolCall,
+                    toolResult = item.toolResult,
+                    callTitle = "2 · selected tool call",
+                    resultTitle = "Execution result",
+                )
+            }
         }
         if (item.error != null) {
             item {
@@ -874,18 +821,8 @@ private fun HistoryDetailScreen(item: StoredInteraction?, onBack: () -> Unit) {
             }
         }
         item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(215.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Panel("LED", Modifier.weight(0.8f).fillMaxHeight()) {
-                    LedPreview(item.toolCall, honorDuration = false)
-                }
-                Panel("Metrics", Modifier.weight(1.4f).fillMaxHeight()) {
-                    MetricsSummary(item.metrics, item.tokenTimings)
-                }
+            Panel("Metrics") {
+                MetricsSummary(item.metrics, item.tokenTimings)
             }
         }
         item {
@@ -995,33 +932,6 @@ private fun Panel(
             content()
         }
     }
-}
-
-private data class LedAction(
-    val color: String,
-    val mode: String,
-    val durationSeconds: Double,
-)
-
-private fun parseLedAction(toolCall: String): LedAction? = runCatching {
-    val call = JSONArray(toolCall).optJSONObject(0) ?: return@runCatching null
-    if (call.optString("name") != "set_led") return@runCatching null
-    val arguments = call.optJSONObject("arguments") ?: return@runCatching null
-    val mode = arguments.optString("mode")
-    val color = arguments.optString("color").ifBlank { "white" }
-    val duration = arguments.optDouble("duration_seconds", 2.0)
-        .takeIf { it.isFinite() && it > 0.0 } ?: 2.0
-    if (mode.isBlank()) null else LedAction(color, mode, duration)
-}.getOrNull()
-
-private fun ledColor(name: String): Color = when (name.lowercase()) {
-    "red" -> Color(0xFFFF3B30)
-    "green" -> Color(0xFF34C759)
-    "blue" -> Color(0xFF0A84FF)
-    "yellow" -> Color(0xFFFFD60A)
-    "purple" -> Color(0xFFAF52DE)
-    "white" -> Color(0xFFF2F2F7)
-    else -> AgaveFaint
 }
 
 private fun liveDecodeTps(timings: List<TokenTiming>): Double {

@@ -24,6 +24,9 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
                 created_at INTEGER NOT NULL,
                 prompt TEXT NOT NULL,
                 raw_output TEXT NOT NULL,
+                routing_reasoning TEXT NOT NULL DEFAULT '',
+                routing_tool_call TEXT NOT NULL DEFAULT '',
+                routing_result TEXT NOT NULL DEFAULT '',
                 reasoning TEXT NOT NULL,
                 tool_call TEXT NOT NULL,
                 tool_result TEXT NOT NULL DEFAULT '',
@@ -46,6 +49,11 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE interactions ADD COLUMN tool_result TEXT NOT NULL DEFAULT ''")
         }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE interactions ADD COLUMN routing_reasoning TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE interactions ADD COLUMN routing_tool_call TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE interactions ADD COLUMN routing_result TEXT NOT NULL DEFAULT ''")
+        }
     }
 
     @Synchronized
@@ -54,6 +62,9 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
             put("created_at", interaction.createdAt)
             put("prompt", interaction.prompt)
             put("raw_output", interaction.rawOutput)
+            put("routing_reasoning", interaction.routingReasoning)
+            put("routing_tool_call", interaction.routingToolCall)
+            put("routing_result", interaction.routingResult)
             put("reasoning", interaction.reasoning)
             put("tool_call", interaction.toolCall)
             put("tool_result", interaction.toolResult)
@@ -101,6 +112,9 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
                             createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("created_at")),
                             prompt = cursor.getString(cursor.getColumnIndexOrThrow("prompt")),
                             rawOutput = cursor.getString(cursor.getColumnIndexOrThrow("raw_output")),
+                            routingReasoning = cursor.getString(cursor.getColumnIndexOrThrow("routing_reasoning")),
+                            routingToolCall = cursor.getString(cursor.getColumnIndexOrThrow("routing_tool_call")),
+                            routingResult = cursor.getString(cursor.getColumnIndexOrThrow("routing_result")),
                             reasoning = cursor.getString(cursor.getColumnIndexOrThrow("reasoning")),
                             toolCall = cursor.getString(cursor.getColumnIndexOrThrow("tool_call")),
                             toolResult = cursor.getString(cursor.getColumnIndexOrThrow("tool_result")),
@@ -121,6 +135,9 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
         createdAt = createdAt,
         prompt = prompt,
         rawOutput = rawOutput,
+        routingReasoning = routingReasoning,
+        routingToolCall = routingToolCall,
+        routingResult = routingResult,
         reasoning = reasoning,
         toolCall = toolCall,
         toolResult = toolResult,
@@ -131,6 +148,6 @@ class InteractionStore(context: Context) : SQLiteOpenHelper(
 
     private companion object {
         const val DATABASE_NAME = "agave.db"
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
     }
 }

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "vibrate",
+  "version": 1,
+  "order": 240,
+  "enabled": true,
+  "tool": {
+    "name": "vibrate",
+    "description": "Vibrate the phone for a duration",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "duration_ms": {
+          "type": "integer",
+          "description": "vibration duration in milliseconds",
+          "maximum": 10000
+        }
+      },
+      "required": [
+        "duration_ms"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "vibrate",
+      "vibration",
+      "haptic",
+      "buzz",
+      "duration"
+    ],
+    "examples": [
+      "vibrate for one second",
+      "buzz the phone briefly"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "vibrate"
+  }
+}

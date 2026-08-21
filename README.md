@@ -12,12 +12,11 @@ Agave adds the Android NDK build, JNI bridge, native row worker pool, Compose in
 
 - Bundles the official `Cactus-Compute/needle2` `.cact` weights in the APK.
 - Reads the complete model asset into native RAM during startup and retains it for the process lifetime.
-- Primes and snapshots the fixed tool-schema prefix once at startup.
+- Keeps only `find_tool` in the waiting-state prompt, then BM25-retrieves a token-budgeted skill subset and re-primes Needle for a second selection pass.
 - Streams every generated token from native code into Compose.
-- Separately renders `<think>` reasoning, formatted `<tool_call>` JSON, and execution results side by side.
-- Bundles `set_led`, `get_weather`, `get_time`, `set_brightness`, and `set_volume` schemas.
-- Executes `get_time` locally, applies Agave-window brightness, and controls Android's media-volume stream.
-- Shows an on-screen LED that defaults to off, renders generated colors, animates `flash` calls, and turns off when `duration_seconds` expires.
+- Renders the complete two-stage process: `find_tool` reasoning/call, BM25 keywords/scores/candidates, selected-tool reasoning/call, and execution result.
+- Packages 37 independent skill manifests: one router, three fully executed Android skills, and 33 selection-only skills spanning common Android capabilities.
+- Executes `get_time` locally, applies Agave-window brightness, and controls Android's media-volume stream; selection-only skills return an explicit non-execution result.
 - Records TTFT, prefill/decode throughput, confidence, and every token's elapsed/inter-token timing.
 - Persists completed interactions, tool results, and metrics in an on-device SQLite database.
 - Runs offline. Media-volume control uses Android's normal `MODIFY_AUDIO_SETTINGS` permission and requires no runtime prompt.
@@ -59,10 +58,12 @@ The APK intentionally targets only `arm64-v8a`.
 1. Kotlin reads the uncompressed model asset into a byte array.
 2. JNI copies the bytes into a retained native allocation.
 3. `nd_model_open` binds tensors directly over that in-RAM `.cact` blob.
-4. The fixed bundled schemas are compacted and compiled into the byte grammar.
-5. The schema prompt prefix is evaluated once and snapshotted.
-6. Each request rewinds to that snapshot, prefills the request, and performs grammar-constrained token stepping.
-7. Native callbacks send token bytes and timestamps to the ViewModel.
+4. `SkillCatalog` merges bundled and local skill folders and indexes retrievable skills with BM25.
+5. The waiting-state prefix is compiled and primed with only `find_tool`.
+6. The first inference emits keyword strings for the user's request.
+7. BM25 ranks skills; Agave packs candidates within a measured prefix-token budget.
+8. The candidate schemas are compiled and primed, then the original request is inferred again.
+9. The selected tool executes, its result is persisted, and Agave restores the `find_tool` waiting state.
 
 ## Metric definitions
 
@@ -77,6 +78,7 @@ These are app-observed steady-clock measurements around the C engine; they are n
 
 ## Documents
 
+- [`docs/skills.md`](docs/skills.md)
 - [`docs/build.md`](docs/build.md)
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/known-limitations.md`](docs/known-limitations.md)

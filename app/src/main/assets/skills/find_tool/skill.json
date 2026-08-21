@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "find_tool",
+  "version": 1,
+  "order": 0,
+  "enabled": true,
+  "tool": {
+    "name": "find_tool",
+    "description": "Always call this tool to search for skills relevant to the user's command",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "description": "short requested action and object keywords",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      },
+      "required": ["keywords"]
+    }
+  },
+  "execution": {
+    "runtime": "router",
+    "entrypoint": "bm25"
+  }
+}

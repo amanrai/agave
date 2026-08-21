@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "compose_message",
+  "version": 1,
+  "order": 220,
+  "enabled": true,
+  "tool": {
+    "name": "compose_message",
+    "description": "Compose an SMS message without sending it",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "phone_number": {
+          "type": "string",
+          "description": "recipient phone number"
+        },
+        "message": {
+          "type": "string",
+          "description": "message body"
+        }
+      },
+      "required": [
+        "phone_number",
+        "message"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "sms",
+      "text message",
+      "message",
+      "compose",
+      "phone number"
+    ],
+    "examples": [
+      "text 5551234 that I am late",
+      "compose an SMS message"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "compose_message"
+  }
+}

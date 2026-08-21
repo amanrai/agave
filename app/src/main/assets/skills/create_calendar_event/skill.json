@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "create_calendar_event",
+  "version": 1,
+  "order": 310,
+  "enabled": true,
+  "tool": {
+    "name": "create_calendar_event",
+    "description": "Create an event in the Android calendar",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "event title"
+        },
+        "start_time": {
+          "type": "string",
+          "description": "event start date and time"
+        },
+        "end_time": {
+          "type": "string",
+          "description": "optional event end date and time"
+        }
+      },
+      "required": [
+        "title",
+        "start_time"
+      ]
+    }
+  },
+  "retrieval": {
+    "tags": [
+      "calendar",
+      "event",
+      "meeting",
+      "appointment",
+      "schedule",
+      "date",
+      "time"
+    ],
+    "examples": [
+      "add lunch tomorrow at noon to my calendar",
+      "create a calendar event"
+    ]
+  },
+  "execution": {
+    "runtime": "selection_only",
+    "entrypoint": "create_calendar_event"
+  }
+}
